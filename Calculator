@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Task 2 — Elite Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+  /* Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Playfair+Display:wght@400;600&display=swap');
+
+  :root{
+    --bg:#0c0d10; --card:#0f1114; --muted:#9aa0a6; --glass: rgba(255,255,255,0.04);
+    --accent1:#7fd6c2; --accent2:#9a88f7;
+    --glass-border: rgba(255,255,255,0.06);
+    --glass-strong: rgba(255,255,255,0.08);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto;
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(142,126,240,0.06), transparent),
+                radial-gradient(1000px 400px at 90% 90%, rgba(127,214,194,0.04), transparent),
+                var(--bg);
+    color:#e6e6e6; display:flex; align-items:center; justify-content:center; padding:32px;
+  }
+
+  .shell{
+    width: 420px; max-width:92vw;
+    border-radius:18px; padding:22px; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    box-shadow: 0 10px 30px rgba(2,4,7,0.7), inset 0 1px 0 rgba(255,255,255,0.02);
+    border:1px solid var(--glass-border);
+    backdrop-filter: blur(6px);
+  }
+
+  .brand {font-family:"Playfair Display", serif; font-weight:600; font-size:20px; letter-spacing:0.6px; color:transparent;
+    background:linear-gradient(90deg,var(--accent1),var(--accent2)); -webkit-background-clip:text; text-align:center;
+  }
+
+  .desc{color:var(--muted); font-size:13px; text-align:center; margin-top:6px}
+
+  .display {
+    margin-top:18px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:12px; padding:14px 16px; border:1px solid var(--glass-strong);
+    min-height:86px; display:flex; flex-direction:column; justify-content:center; position:relative;
+  }
+
+  .expression{color:#9fa6ad; font-size:14px; opacity:0.95}
+  .result{font-size:28px; font-weight:700; margin-top:6px; color:#fff; letter-spacing:0.4px; word-wrap:break-word}
+
+  .keys{margin-top:16px; display:grid; grid-template-columns: repeat(4,1fr); gap:12px}
+  .btn{
+    padding:14px; border-radius:12px; background:var(--glass); color:#e8eef0; border:1px solid rgba(255,255,255,0.03);
+    backdrop-filter: blur(6px); cursor:pointer; font-weight:600; transition: transform .12s ease, box-shadow .12s;
+    box-shadow: 0 6px 18px rgba(2,4,7,0.6);
+  }
+  .btn:active{transform: translateY(3px) scale(0.998)}
+  .btn:hover{box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 18px rgba(137,132,255,0.04)}
+  .btn.op { background:linear-gradient(135deg, rgba(122,210,195,0.06), rgba(150,140,247,0.04)); color:var(--accent1) }
+  .btn.equal{grid-column: span 2; background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#061017; font-weight:800; font-size:16px}
+
+  .small {font-size:13px; color:var(--muted)}
+
+  /* history */
+  .history {
+    margin-top:12px; max-height:84px; overflow:auto; padding-right:6px;
+  }
+  .history li{list-style:none; color:var(--muted); font-size:13px; padding:6px 0; border-bottom:1px dashed rgba(255,255,255,0.02)}
+
+  /* responsiveness */
+  @media (max-width:420px){ .shell{padding:16px} .result{font-size:22px}}
+</style>
+</head>
+<body>
+  <div class="shell" role="application" aria-label="Advanced calculator">
+    <div class="brand">DarkElite Calculator</div>
+    <div class="desc">Precision-first expression evaluator — keyboard friendly</div>
+
+    <div class="display" id="display">
+      <div class="expression" id="expr">0</div>
+      <div class="result" id="res">0</div>
+    </div>
+
+    <div class="keys" id="keys" aria-hidden="false" tabindex="0">
+      <!-- row 1 -->
+      <button class="btn" data-key="C">C</button>
+      <button class="btn" data-key="(">(</button>
+      <button class="btn" data-key=")">)</button>
+      <button class="btn op" data-key="/">÷</button>
+
+      <button class="btn" data-key="7">7</button>
+      <button class="btn" data-key="8">8</button>
+      <button class="btn" data-key="9">9</button>
+      <button class="btn op" data-key="*">×</button>
+
+      <button class="btn" data-key="4">4</button>
+      <button class="btn" data-key="5">5</button>
+      <button class="btn" data-key="6">6</button>
+      <button class="btn op" data-key="-">−</button>
+
+      <button class="btn" data-key="1">1</button>
+      <button class="btn" data-key="2">2</button>
+      <button class="btn" data-key="3">3</button>
+      <button class="btn op" data-key="+">+</button>
+
+      <button class="btn" data-key="0">0</button>
+      <button class="btn" data-key=".">.</button>
+      <button class="btn equal" data-key="=">=</button>
+    </div>
+
+    <ul class="history" id="history" aria-live="polite"></ul>
+  </div>
+
+<script>
+  // Simple expression evaluator with sanitization
+  const exprEl = document.getElementById('expr');
+  const resEl = document.getElementById('res');
+  const historyEl = document.getElementById('history');
+  const keys = document.querySelectorAll('.btn');
+
+  let expression = '';
+  const pushHistory = (exp, val) => {
+    const li = document.createElement('li');
+    li.textContent = `${exp} = ${val}`;
+    historyEl.prepend(li);
+    if(historyEl.children.length>6) historyEl.removeChild(historyEl.lastChild);
+  }
+
+  const safeEval = (s) => {
+    // allow numbers, parentheses, ., + - * / and spaces
+    if(!/^[0-9+\-*/().\s]+$/.test(s)) throw 'Invalid characters';
+    // simple replace unicode operators
+    s = s.replace(/×/g, '*').replace(/÷/g,'/');
+    // disallow leading zeros that cause octal? not needed
+    // evaluate with Function to avoid eval directness
+    return Function('"use strict"; return ('+s+')')();
+  }
+
+  const update = () => {
+    exprEl.textContent = expression || '0';
+    try {
+      const val = expression ? safeEval(expression) : 0;
+      resEl.textContent = Number.isFinite(val) ? (Math.round(val*1e12)/1e12) : 'Err';
+    } catch(e){
+      resEl.textContent = 'Err';
+    }
+  }
+
+  keys.forEach(btn=>{
+    btn.addEventListener('click', ()=> handleInput(btn.dataset.key));
+  });
+
+  const handleInput = (k) => {
+    if(k === 'C'){ expression=''; update(); return; }
+    if(k === '='){
+      try {
+        const val = safeEval(expression || '0');
+        pushHistory(expression||'0', val);
+        expression = String(Math.round(val*1e12)/1e12);
+      } catch(e) {
+        resEl.textContent = 'Err';
+      }
+      update();
+      return;
+    }
+    const mapping = { '×':'*','÷':'/','−':'-' };
+    expression += (mapping[k]||k);
+    update();
+  }
+
+  // Keyboard support
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter') { e.preventDefault(); handleInput('='); return; }
+    if(e.key === 'Backspace') { expression = expression.slice(0,-1); update(); return; }
+    if(e.key === 'c' || e.key === 'C') { expression=''; update(); return; }
+    // accept digits and operators
+    if(/^[0-9+\-*/().]$/.test(e.key)){ handleInput(e.key); }
+  });
+
+  // initialize
+  expression=''; update();
+</script>
+</body>
+</html>
