@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dark Elite Gallery — Advanced</title>
+
+    <style>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", sans-serif;
+        }
+
+        body {
+            background: #0d0f11;
+            color: #d6d6d6;
+            padding-bottom: 100px;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: url("https://grainy-gradients.vercel.app/noise.svg");
+            opacity: 0.05;
+            pointer-events: none;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            padding: 18px 30px;
+            background: rgba(18, 18, 25, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 999;
+            gap: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #8bd2c5, #8e7ef0);
+            background-clip: text;
+            color: transparent;
+        }
+
+        .search {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 16px;
+            border-radius: 14px;
+            color: #fff;
+            width: 220px;
+            outline: none;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            background: rgba(255,255,255,0.07);
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            color: #dcdcdc;
+            font-size: 0.85rem;
+            transition: .25s ease;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: rgba(139,210,197,0.15);
+            border-color: #8bd2c5;
+            color: #8bd2c5;
+        }
+
+        
+        .header {
+            margin-top: 130px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-size: 3rem;
+            background: linear-gradient(90deg, #8bd2c5, #8e7ef0);
+          background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            margin-top: 10px;
+            max-width: 650px;
+            margin-inline: auto;
+            color: #8c8c8c;
+        }
+
+       
+        .masonry {
+            columns: 4;
+            column-gap: 20px;
+            width: 90%;
+            margin: auto;
+        }
+
+        .item {
+            break-inside: avoid;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp .8s ease forwards;
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .item img {
+            width: 100%;
+            border-radius: 16px;
+            transition: .35s;
+            cursor: pointer;
+            filter: brightness(0.85);
+        }
+
+        .item img:hover {
+            transform: scale(1.04) rotate3d(1,1,0,6deg);
+            filter: brightness(1) saturate(1.15);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+        }
+
+       
+        .lightbox {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            backdrop-filter: blur(12px);
+            background: rgba(10,10,15,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 999;
+        }
+
+        .lightbox-content {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .lightbox img {
+            max-width: 75%;
+            max-height: 80vh;
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+        }
+
+        .nav-btn {
+            color: #dcdcdc;
+            font-size: 50px;
+            cursor: pointer;
+            transition: .3s;
+            user-select: none;
+        }
+
+        .nav-btn:hover {
+            color: #8bd2c5;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 40px;
+            right: 60px;
+            font-size: 50px;
+            color: #f0f0f0;
+            cursor: pointer;
+        }
+
+        .lightbox-caption {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            color: #a8a8a8;
+            font-style: italic;
+        }
+
+       
+        .footer {
+            text-align: center;
+            margin-top: 70px;
+            color: #777;
+        }
+
+     
+        @media (max-width: 768px) {
+            .masonry { columns: 2; }
+            .navbar { flex-direction: column; gap: 12px; }
+            .search { width: 100%; }
+            .filters { flex-wrap: wrap; justify-content: center; }
+        }
+
+        @media (max-width: 480px) {
+            .masonry { columns: 1; }
+        }
+    </style>
+</head>
+
+<body>
+
+   
+    <nav class="navbar">
+        <h2 class="logo">DarkElite</h2>
+
+        <input type="text" id="search" class="search" placeholder="Search images...">
+
+        <div class="filters">
+            <button data-filter="all" class="filter-btn active">All</button>
+            <button data-filter="nature" class="filter-btn">Nature</button>
+            <button data-filter="city" class="filter-btn">City</button>
+            <button data-filter="aesthetic" class="filter-btn">Aesthetic</button>
+            <button data-filter="people" class="filter-btn">People</button>
+        </div>
+    </nav>
+
+    
+    <header class="header">
+        <h1 class="title">Dark Elite Gallery</h1>
+        <p class="subtitle">
+            Where aesthetics meet functionality, crafted for elegance, depth, and pure visual pleasure.
+        </p>
+    </header>
+
+    <div class="masonry">
+        <div class="item" data-category="nature"><img src="images/img1.jpg" alt="Forest Road"></div>
+        <div class="item" data-category="city"><img src="images/img2.jpg" alt="City Skyline"></div>
+        <div class="item" data-category="aesthetic"><img src="images/img3.jpg" alt="Aesthetic Desk"></div>
+        <div class="item" data-category="people"><img src="images/img4.jpg" alt="Portrait"></div>
+
+        <div class="item" data-category="nature"><img src="images/img5.jpg" alt="Mountain Range"></div>
+        <div class="item" data-category="city"><img src="images/img6.jpg" alt="Street Nightlife"></div>
+        <div class="item" data-category="aesthetic"><img src="images/img7.jpg" alt="Coffee Aesthetic"></div>
+        <div class="item" data-category="people"><img src="images/img8.jpg" alt="Editorial Shoot"></div>
+    </div>
+
+  
+    <div class="lightbox" id="lightbox">
+        <span class="close-btn" id="closeBtn">&times;</span>
+
+        <div class="lightbox-content">
+            <span class="nav-btn" id="prevBtn">&#10094;</span>
+            <img id="lightboxImg" src="">
+            <span class="nav-btn" id="nextBtn">&#10095;</span>
+        </div>
+
+        <p class="lightbox-caption" id="caption"></p>
+    </div>
+
+    <footer class="footer">
+        <p>Crafted for CodeAlpha Internship</p>
+    </footer>
+
+    
+    <script>
+        const items = document.querySelectorAll(".item");
+        const searchInput = document.getElementById("search");
+        const filterBtns = document.querySelectorAll(".filter-btn");
+
+        const images = document.querySelectorAll(".item img");
+        const lightbox = document.getElementById("lightbox");
+        const lightboxImg = document.getElementById("lightboxImg");
+        const caption = document.getElementById("caption");
+        const closeBtn = document.getElementById("closeBtn");
+        const nextBtn = document.getElementById("nextBtn");
+        const prevBtn = document.getElementById("prevBtn");
+
+        let index = 0;
+
+     
+        filterBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+
+                filterBtns.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+
+                const category = btn.dataset.filter;
+
+                items.forEach(item => {
+                    if (category === "all" || item.dataset.category === category) {
+                        item.style.display = "block";
+                    } else {
+                        item.style.display = "none";
+                    }
+                });
+            });
+        });
+
+       
+        searchInput.addEventListener("keyup", () => {
+            const value = searchInput.value.toLowerCase();
+
+            items.forEach(item => {
+                const alt = item.querySelector("img").alt.toLowerCase();
+                item.style.display = alt.includes(value) ? "block" : "none";
+            });
+        });
+
+      
+        images.forEach((img, i) => {
+            img.addEventListener("click", () => {
+                index = i;
+                updateLightbox();
+                lightbox.style.display = "flex";
+            });
+        });
+
+        closeBtn.addEventListener("click", () => {
+            lightbox.style.display = "none";
+        });
+
+        nextBtn.addEventListener("click", nextImage);
+        prevBtn.addEventListener("click", prevImage);
+
+        function nextImage() {
+            index = (index + 1) % images.length;
+            updateLightbox();
+        }
+
+        function prevImage() {
+            index = (index - 1 + images.length) % images.length;
+            updateLightbox();
+        }
+
+        function updateLightbox() {
+            const img = images[index];
+            lightboxImg.src = img.src;
+            caption.innerText = img.alt;
+        }
+
+      
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") lightbox.style.display = "none";
+            if (e.key === "ArrowRight") nextImage();
+            if (e.key === "ArrowLeft") prevImage();
+        });
+    </script>
+
+</body>
+</html>
